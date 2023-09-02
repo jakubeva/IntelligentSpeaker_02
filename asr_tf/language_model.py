@@ -54,40 +54,6 @@ class ModelLanguage():  # 语音模型类
         return model
         pass
 
-    # def SpeechToText(self, list_syllable):
-    #     '''
-    #     为语音识别专用的处理函数
-    #     实现从语音拼音符号到最终文本的转换
-    #     '''
-    #     r = ''
-    #     length = len(list_syllable)
-    #     if (length == 0):  # 传入的参数没有包含任何拼音时
-    #         return ''
-    #
-    #     # 先取出一个字，即拼音列表中第一个字，例如kao3
-    #     str_tmp = [list_syllable[0]]
-    #
-    #     for i in range(0, length - 1):
-    #         # 依次从第一个字开始每次连续取两个字拼音
-    #         str_split = list_syllable[i] + ' ' + list_syllable[i + 1]
-    #         # 如果这个拼音在汉语拼音状态转移字典里的话
-    #         if (str_split in self.pinyin):
-    #             # 将第二个字的拼音加入
-    #             str_tmp.append(list_syllable[i + 1])
-    #         else:
-    #             # 否则不加入，然后直接将现有的拼音序列进行解码
-    #             str_decode = self.decode(str_tmp, 0.0000)
-    #             if (str_decode != []):
-    #                 r += str_decode[0][0]
-    #             # 再重新从i+1开始作为第一个拼音
-    #             str_tmp = [list_syllable[i + 1]]
-    #
-    #     str_decode = self.decode(str_tmp, 0.0000)
-    #
-    #     if (str_decode != []):
-    #         r += str_decode[0][0]
-    #
-    #     return r
 
     def PinyinToText(self, list_syllable):
         '''
@@ -144,17 +110,16 @@ class ModelLanguage():  # 语音模型类
         for i in range(num_pinyin):
             # print(i)
             ls = ''
-            if (list_syllable[i] in self.dict_pinyin):  # 如果这个拼音在汉语拼音字典里的话
+            if list_syllable[i] in self.dict_pinyin:  # 如果这个拼音在汉语拼音字典里的话
                 # 获取拼音下属的字的列表，ls包含了该拼音对应的所有的字,例如bao2 薄雹保
                 ls = self.dict_pinyin[list_syllable[i]]
             else:
                 break
 
-            if (i == 0):
+            if i == 0:
                 # 第一个字做初始处理
                 num_ls = len(ls)
                 for j in range(num_ls):
-                    tuple_word = ['', 0.0]
                     # 设置马尔科夫模型初始状态值
                     # 设置初始概率，置为1.0
                     tuple_word = [ls[j], 1.0]
@@ -175,23 +140,19 @@ class ModelLanguage():  # 语音模型类
                         tuple_word[0] = tuple_word[0] + ls[k]  # 尝试按照下一个音可能对应的全部的字进行组合
 
                         tmp_words = tuple_word[0][-2:]  # 取出用于计算的最后两个字
-                        if (tmp_words in self.model2):  # 判断它们是不是再状态转移表里
+                        if (tmp_words in self.model2):  # 判断它们是不是在状态转移表里
                             tuple_word[1] = tuple_word[1] * float(self.model2[tmp_words]) / float(
                                 self.model1[tmp_words[-2]])
                         # 核心！在当前概率上乘转移概率，公式化简后为第n-1和n个字出现的次数除以第n-1个字出现的次数
-                        # print(self.model2[tmp_words],self.model1[tmp_words[-2]])
                         else:
                             tuple_word[1] = 0.0
                             continue
-                        # print('tw2: ',tuple_word)
-                        # print(tuple_word[1] >= pow(yuzhi, i))
                         if (tuple_word[1] >= pow(yuzhi, i)):
                             # 大于阈值之后保留，否则丢弃
                             list_words_2.append(tuple_word)
 
                 list_words = list_words_2
-            # print(list_words,'\n')
-        # print(list_words)
+
         for i in range(0, len(list_words)):
             for j in range(i + 1, len(list_words)):
                 if (list_words[i][1] < list_words[j][1]):

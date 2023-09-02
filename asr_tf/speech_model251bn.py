@@ -70,7 +70,7 @@ class ModelSpeech():  # 语音模型类
         layer_h3 = MaxPooling2D(pool_size=2, strides=None, padding="valid")(layer_h2)  # 池化层 800,100,32
 
         layer_h4 = Conv2D(64, (3, 3), use_bias=True, padding='same', kernel_initializer='he_normal', name='Conv2')(
-            layer_h3)  # 卷积层
+            layer_h3)  # 卷积层800，100，64
         layer_h4 = BatchNormalization(epsilon=0.0002, name='BN2')(layer_h4)
         layer_h4 = Activation('relu', name='Act2')(layer_h4)
 
@@ -79,10 +79,10 @@ class ModelSpeech():  # 语音模型类
         layer_h5 = BatchNormalization(epsilon=0.0002, name='BN3')(layer_h5)
         layer_h5 = Activation('relu', name='Act3')(layer_h5)
 
-        layer_h6 = MaxPooling2D(pool_size=2, strides=None, padding="valid")(layer_h5)  # 池化层
+        layer_h6 = MaxPooling2D(pool_size=2, strides=None, padding="valid")(layer_h5)  # 池化层 400，50，128
 
         layer_h7 = Conv2D(128, (3, 3), use_bias=True, padding='same', kernel_initializer='he_normal', name='Conv4')(
-            layer_h6)  # 卷积层
+            layer_h6)  # 卷积层400，50，128
         layer_h7 = BatchNormalization(epsilon=0.0002, name='BN4')(layer_h7)
         layer_h7 = Activation('relu', name='Act4')(layer_h7)
 
@@ -91,10 +91,10 @@ class ModelSpeech():  # 语音模型类
         layer_h8 = BatchNormalization(epsilon=0.0002, name='BN5')(layer_h8)
         layer_h8 = Activation('relu', name='Act5')(layer_h8)
 
-        layer_h9 = MaxPooling2D(pool_size=2, strides=None, padding="valid")(layer_h8)  # 池化层
+        layer_h9 = MaxPooling2D(pool_size=2, strides=None, padding="valid")(layer_h8)  # 池化层 200，25，128
 
         layer_h10 = Conv2D(128, (3, 3), use_bias=True, padding='same', kernel_initializer='he_normal', name='Conv6')(
-            layer_h9)  # 卷积层
+            layer_h9)  # 卷积层 200，25，128
         layer_h10 = BatchNormalization(epsilon=0.0002, name='BN6')(layer_h10)
         layer_h10 = Activation('relu', name='Act6')(layer_h10)
 
@@ -103,10 +103,10 @@ class ModelSpeech():  # 语音模型类
         layer_h11 = BatchNormalization(epsilon=0.0002, name='BN7')(layer_h11)
         layer_h11 = Activation('relu', name='Act7')(layer_h11)
 
-        layer_h12 = MaxPooling2D(pool_size=1, strides=None, padding="valid")(layer_h11)  # 池化层
+        layer_h12 = MaxPooling2D(pool_size=1, strides=None, padding="valid")(layer_h11)  # 池化层200，25，128
 
         layer_h13 = Conv2D(128, (3, 3), use_bias=True, padding='same', kernel_initializer='he_normal', name='Conv8')(
-            layer_h12)  # 卷积层
+            layer_h12)  # 卷积层200，25，128
         layer_h13 = BatchNormalization(epsilon=0.0002, name='BN8')(layer_h13)
         layer_h13 = Activation('relu', name='Act8')(layer_h13)
 
@@ -115,14 +115,14 @@ class ModelSpeech():  # 语音模型类
         layer_h14 = BatchNormalization(epsilon=0.0002, name='BN9')(layer_h14)
         layer_h14 = Activation('relu', name='Act9')(layer_h14)
 
-        layer_h15 = MaxPooling2D(pool_size=1, strides=None, padding="valid")(layer_h14)  # 池化层
+        layer_h15 = MaxPooling2D(pool_size=1, strides=None, padding="valid")(layer_h14)  # 池化层200，25，128
 
-        layer_h16 = Reshape((200, 3200))(layer_h15)  # Reshape层200,3200,1
+        layer_h16 = Reshape((200, 3200))(layer_h15)  # Reshape层200,3200
 
         layer_h17 = Dense(128, activation="relu", use_bias=True, kernel_initializer='he_normal')(layer_h16)  # 全连接层
 
         layer_h18 = Dense(self.MS_OUTPUT_SIZE, use_bias=True, kernel_initializer='he_normal')(
-            layer_h17)  # 全连接层200,3200,1428
+            layer_h17)  # 全连接层200,1428
         y_pred = Activation('softmax', name='Activation0')(layer_h18)
 
         model_base = Model(inputs=input_data, outputs=y_pred)
@@ -195,8 +195,8 @@ class ModelSpeech():  # 语音模型类
         f.write(filename + comment)
         f.close()
 
-    def TestModel(self, datapath='', str_dataset='dev', data_count=32, out_report=False, show_ratio=True,
-                  io_step_print=100, io_step_file=10):
+    def TestModel(self, str_dataset='dev', data_count=32, out_report=False, show_ratio=True,
+                  io_step_print=100):
         """
         测试检验模型效果
         io_step_print
@@ -226,7 +226,6 @@ class ModelSpeech():  # 语音模型类
 
                 # 数据格式出错处理 开始
                 # 当输入的wav文件长度过长时自动跳过该文件，转而使用下一个wav文件来运行
-                num_bias = 0
                 while data_input.shape[0] > self.AUDIO_LENGTH:
                     print('*[Error]', 'wave data lenghth of num', (ran_num + i) % num_data, 'is too long.',
                           '\n A Exception raise when test Speech Model.')
@@ -244,9 +243,6 @@ class ModelSpeech():  # 语音模型类
                 else:  # 否则肯定是增加了一堆乱七八糟的奇奇怪怪的字
                     word_error_num += words_n  # 就直接加句子本来的总字数就好了
 
-                # if (i % io_step_print == 0 or i == data_count - 1) and show_ratio == True:
-                #     print('测试进度：',i,'/',data_count)
-                # print('Test Count: ', i, '/', data_count)
                 if i % io_step_print == 0 and show_ratio:
                     print('[ASRT Info] Testing: ', i, '/', data_count)
 

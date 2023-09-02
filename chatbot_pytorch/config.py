@@ -5,16 +5,14 @@ PAD_token = 0  # 表示padding
 SOS_token = 1  # 句子的开始
 EOS_token = 2  # 句子的结束
 MAX_LENGTH = 20  # 句子最大长度是10个词(包括EOS等特殊词)
-save_dir = './save'
+save_dir = '../chatbot_pytorch/save'
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
 # device = "cpu"
 
-# loadFilename = r'./save\model\formatted_movie_lines\2-2_500\2500_checkpoint.tar'
 loadFilename = False
-corpus = 'data/xiaohuangji/my_formatted_movie_lines.txt'
-# corpus = 'data/qingyun/qingyun.tsv'
+corpus = '../chatbot_pytorch/data/standardlized/corpus.txt'
 corpus_name = os.path.split(corpus)[-1].split('.')[0]
 
 # 模型参数

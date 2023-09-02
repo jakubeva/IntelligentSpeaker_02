@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+
 #
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(basedir)
-
 
 # Form implementation generated from reading ui file 'speaker.ui'
 #
@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 
 from asr_tf.asr_server import recognize
 from asr_tf.record import record
+from chatbot_pytorch.evaluate import *
 
 i = 1
 j = 1
@@ -38,6 +39,49 @@ def recognizeSpeech(filename):
     record(filename, time=2)
     # 返回识别内容
     return recognize(filename)
+
+
+# def chatByText(r):
+#     print("chat by text...")
+#     return chat(r)
+
+def chat(r):
+    """
+    最终做聊天机器人用的函数，针对指定内容进行回复
+    """
+    modelFile = '../chatbot_pytorch/save/model/corpus/2-2_800/50000_checkpoint.tar'
+    print("chatbot模型已加载")
+    n_layers, hidden_size, reverse = parseFilename(modelFile)
+
+    torch.set_grad_enabled(False)
+
+    voc, pairs = loadPrepareData(corpus)
+    embedding = nn.Embedding(voc.num_words, hidden_size)
+    encoder = EncoderRNN(voc.num_words, hidden_size, embedding, n_layers)
+    attn_model = 'dot'
+    decoder = LuongAttnDecoderRNN(attn_model, embedding, hidden_size, voc.num_words, n_layers)
+
+    checkpoint = torch.load(modelFile, map_location=torch.device('cpu'))
+    encoder.load_state_dict(checkpoint['en'])
+    decoder.load_state_dict(checkpoint['de'])
+
+    # train mode set to false, effect only on dropout, batchNorm
+    encoder.eval()
+    decoder.eval()
+    encoder = encoder.to(device)
+    decoder = decoder.to(device)
+
+    beam_size = 1
+    # evaluateInput(encoder, decoder, beam_size, voc)
+    if beam_size == 1:
+        output_words, _ = evaluate(encoder, decoder, voc, r, beam_size)
+        print("output_words已准备好")
+        return ' '.join(output_words).replace(" ", "")
+    else:
+        output_words_list = evaluate(encoder, decoder, voc, r, beam_size)
+        for output_words, score in output_words_list:
+            output_sentence = ' '.join(output_words)
+            print("{:.3f} < {}".format(score, output_sentence))
 
 
 class Ui_MainWindow(QMainWindow):
@@ -85,7 +129,7 @@ class Ui_MainWindow(QMainWindow):
         self.textEdit_j.setMaximumSize(QtCore.QSize(16777215, 100))
         self.textEdit_j.setObjectName(f"textEdit_{i - 1}")
         self.gridLayout.addWidget(self.textEdit_j, i - 1, 1, 1, 1)
-        self.textEdit_j.setText(self.textEdit_i.toPlainText())
+        self.textEdit_j.setText(chat(self.textEdit_i.toPlainText()))
         # i += 2
 
     def clickClear(self):
